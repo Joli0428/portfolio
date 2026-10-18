@@ -15,11 +15,52 @@ const TOTAL = pages.length;
 
 const LINKEDIN_URL = "https://www.linkedin.com/in/jolichou";
 
+const MIN_LOADING_MS = 1800; // 開場動畫至少顯示多久
+const MAX_LOADING_MS = 30000; // 最多等多久，超過就直接進入
+
 export default function Home() {
   const scroller = useRef<HTMLDivElement>(null);
   const [current, setCurrent] = useState(0);
   const [started, setStarted] = useState(false);
   const [ended, setEnded] = useState(false);
+  const [ready, setReady] = useState(false);
+  const [progress, setProgress] = useState(0);
+
+  // 預先載入所有圖片，載完才進入作品集
+  useEffect(() => {
+    let cancelled = false;
+    let done = 0;
+    const startTime = Date.now();
+    let finished = false;
+
+    const finish = () => {
+      if (finished || cancelled) return;
+      finished = true;
+      const wait = Math.max(0, MIN_LOADING_MS - (Date.now() - startTime));
+      setTimeout(() => {
+        if (!cancelled) setReady(true);
+      }, wait);
+    };
+
+    pages.forEach((src) => {
+      const img = new window.Image();
+      const onDone = () => {
+        if (cancelled) return;
+        done += 1;
+        setProgress(Math.round((done / pages.length) * 100));
+        if (done === pages.length) finish();
+      };
+      img.onload = onDone;
+      img.onerror = onDone;
+      img.src = src;
+    });
+
+    const timeout = setTimeout(finish, MAX_LOADING_MS);
+    return () => {
+      cancelled = true;
+      clearTimeout(timeout);
+    };
+  }, []);
 
   const goTo = useCallback((i: number) => {
     const el = scroller.current;
@@ -67,15 +108,20 @@ export default function Home() {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (!ready) return;
       if (e.key === "ArrowRight" || e.key === "ArrowDown") goTo(current + 1);
       if (e.key === "ArrowLeft" || e.key === "ArrowUp") goTo(current - 1);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [current, goTo]);
+  }, [current, goTo, ready]);
 
   return (
-    <main className={`paper ${started ? "started" : ""} ${ended ? "ended" : ""}`}>
+    <main
+      className={`paper ${ready ? "ready" : ""} ${started ? "started" : ""} ${
+        ended ? "ended" : ""
+      }`}
+    >
       <div className="scroller" ref={scroller}>
         {pages.map((src, i) => (
           <section className="slide" key={src} data-index={i}>
@@ -138,6 +184,19 @@ export default function Home() {
       >
         ›
       </button>
+
+      {/* 載入畫面：作品集準備中 + 翻書動畫 */}
+      <div className="loader" role="status" aria-live="polite">
+        <div className="book" aria-hidden="true">
+          <span className="book-left" />
+          <span className="book-page p1" />
+          <span className="book-page p2" />
+          <span className="book-page p3" />
+          <span className="book-page p4" />
+        </div>
+        <p className="loader-text">作品集準備中</p>
+        <p className="loader-progress">{progress}%</p>
+      </div>
     </main>
   );
 }

@@ -22,6 +22,83 @@ body {
     url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' seed='7'/><feColorMatrix values='0 0 0 0 0.3  0 0 0 0 0.3  0 0 0 0 0.28  0 0 0 0.16 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
 }
 
+/* ===== 載入畫面：作品集準備中 + 翻書 ===== */
+.loader {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: inherit; /* 沿用紙質背景 */
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.8s ease, visibility 0s linear 0s;
+}
+.paper.ready .loader {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.8s ease, visibility 0s linear 0.8s;
+}
+
+.loader-text {
+  margin-top: 26px;
+  font-family: Georgia, "Songti TC", "Noto Serif TC", serif;
+  font-size: 14px;
+  letter-spacing: 0.4em;
+  margin-right: -0.4em;
+  color: #4a4740;
+}
+.loader-progress {
+  margin-top: 8px;
+  font-family: Georgia, serif;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  color: #8a867c;
+}
+
+/* 小書：左頁固定，右邊四張頁面依序翻到左邊 */
+.book {
+  position: relative;
+  width: 64px;
+  height: 42px;
+  perspective: 400px;
+}
+.book-left,
+.book-page {
+  position: absolute;
+  top: 0;
+  width: 50%;
+  height: 100%;
+  background: #f6f3ea;
+  border: 1.5px solid #5a5750;
+}
+.book-left {
+  left: 0;
+  border-radius: 3px 0 0 3px;
+  border-right-width: 0.75px;
+}
+.book-page {
+  left: 50%;
+  border-radius: 0 3px 3px 0;
+  border-left-width: 0.75px;
+  transform-origin: left center;
+  transform: rotateY(0deg);
+  animation: bookFlip 2.8s ease-in-out infinite;
+}
+.book-page.p1 { animation-delay: 0s;   z-index: 4; }
+.book-page.p2 { animation-delay: 0.3s; z-index: 3; }
+.book-page.p3 { animation-delay: 0.6s; z-index: 2; }
+.book-page.p4 { animation-delay: 0.9s; z-index: 1; }
+
+@keyframes bookFlip {
+  0%   { transform: rotateY(0deg); }
+  45%  { transform: rotateY(-180deg); }
+  100% { transform: rotateY(-180deg); }
+}
+
 /* ===== 橫放 / 電腦：左右翻頁，一次一張 ===== */
 .scroller {
   display: flex;
@@ -65,8 +142,11 @@ body {
   scroll-snap-stop: always;
 }
 
-/* 開場：封面緩緩淡入、微微上浮 */
+/* 開場：載入完成後，封面緩緩淡入、微微上浮 */
 .slide:first-child img {
+  opacity: 0;
+}
+.paper.ready .slide:first-child img {
   animation: coverIn 1.8s cubic-bezier(0.2, 0.7, 0.2, 1) 0.2s both;
 }
 @keyframes coverIn {
@@ -229,7 +309,10 @@ body {
     flex-direction: column;
     align-items: center;
     gap: 6px;
-    /* 進站時輕輕出現 */
+    opacity: 0;
+  }
+  /* 載入完成後，輕輕出現 */
+  .paper.ready .hint-inner {
     animation: hintIn 0.8s ease 1s both;
   }
   .hint-text {
