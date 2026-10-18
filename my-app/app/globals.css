@@ -1,26 +1,204 @@
-@import "tailwindcss";
-
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+  background: #e8e6e1;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* 紙質背景：中性偏灰的米白 + 細纖維顆粒 + 很淡的暈邊 */
+.paper {
+  position: relative;
+  height: 100dvh;
+  width: 100vw;
+  background-color: #e8e6e1;
+  background-image:
+    radial-gradient(ellipse at center, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0) 60%),
+    radial-gradient(ellipse at center, rgba(0, 0, 0, 0) 60%, rgba(60, 58, 52, 0.12) 100%),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' seed='7'/><feColorMatrix values='0 0 0 0 0.3  0 0 0 0 0.3  0 0 0 0 0.28  0 0 0 0.16 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+/* ===== 預設（橫放 / 電腦）：左右翻頁，一次一張 ===== */
+.scroller {
+  display: flex;
+  height: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.scroller::-webkit-scrollbar {
+  display: none;
+}
+
+.slide {
+  position: relative;
+  flex: 0 0 100vw;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px 16px 44px;
+  scroll-snap-align: center;
+  scroll-snap-stop: always;
+}
+
+.slide img {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  box-shadow: 0 8px 22px rgba(40, 38, 32, 0.25);
+}
+
+/* 封面：緩緩淡入、微微上浮 */
+.slide.cover img {
+  animation: coverIn 1.8s cubic-bezier(0.2, 0.7, 0.2, 1) 0.2s both;
+}
+@keyframes coverIn {
+  from { opacity: 0; transform: translateY(14px) scale(0.985); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* 頁碼 */
+.counter {
+  position: absolute;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 3px 12px;
+  border-radius: 999px;
+  background: rgba(232, 230, 225, 0.75);
+  font-family: Georgia, serif;
+  font-size: 13px;
+  letter-spacing: 0.15em;
+  color: #5a5750;
+  z-index: 2;
+}
+
+/* 封面的「往上滑」提示：固定在畫面上，往上滑時淡出 */
+.hint {
+  position: absolute;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  z-index: 2;
+  animation: hintFade 1.2s ease 2s both;
+}
+.hint-text {
+  font-family: Georgia, "Songti TC", "Noto Serif TC", serif;
+  font-size: 12px;
+  letter-spacing: 0.3em;
+  margin-right: -0.3em;
+  color: #6b675e;
+}
+.hint-arrow {
+  width: 8px;
+  height: 8px;
+  border-top: 1.5px solid #6b675e;
+  border-left: 1.5px solid #6b675e;
+  transform: rotate(45deg);
+  animation: hintBounce 1.8s ease-in-out infinite;
+}
+@keyframes hintBounce {
+  0%, 100% { transform: translateY(2px) rotate(45deg); opacity: 0.4; }
+  50%      { transform: translateY(-4px) rotate(45deg); opacity: 1; }
+}
+@keyframes hintFade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.nav {
+  display: none;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(60, 58, 52, 0.15);
+  color: #3a3832;
+  font-size: 28px;
+  cursor: pointer;
+  z-index: 2;
+}
+.nav:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+.prev {
+  left: 12px;
+}
+.next {
+  right: 12px;
+}
+@media (hover: hover) {
+  .nav {
+    display: block;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* ===== 直立：連續的長卷 ===== */
+@media (orientation: portrait) {
+  .scroller {
+    flex-direction: column;
+    gap: 12px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    scroll-snap-type: none;
+    padding: 0 0 64px;
+  }
+
+  .slide {
+    flex: none;
+    width: 100%;
+    height: auto;
+    padding: 0 10px;
+    scroll-snap-align: none;
+  }
+
+  .slide img {
+    width: 100%;
+    height: auto;
+    max-height: none;
+  }
+
+  /* 封面：用 svh（網址列展開時的最小可見高度）撐滿一屏，
+     再多加 8svh，確保第二頁一開始一定在畫面外 */
+  .slide.cover {
+    height: calc(100svh + 8svh);
+    padding-bottom: 8svh;
+    align-items: center;
+  }
+
+  /* 封面和第二頁的視覺間距：把多出來的空白用負 margin 抵掉，
+     讓封面圖片到第二頁的距離接近一般的 12px 間距 */
+  .slide.cover {
+    margin-bottom: calc(-1 * (50svh - 35.5vw) + 12px);
+  }
+
+  .hint {
+    bottom: 5svh;
+  }
+
+  .nav {
+    display: none !important;
+  }
 }
