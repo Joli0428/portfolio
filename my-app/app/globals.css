@@ -11,7 +11,6 @@ body {
   background: #e8e6e1;
 }
 
-/* 紙質背景：中性偏灰的米白 + 細纖維顆粒 + 很淡的暈邊 */
 .paper {
   position: relative;
   height: 100dvh;
@@ -23,7 +22,7 @@ body {
     url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' seed='7'/><feColorMatrix values='0 0 0 0 0.3  0 0 0 0 0.3  0 0 0 0 0.28  0 0 0 0.16 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
 }
 
-/* ===== 預設（橫放 / 電腦）：左右翻頁，一次一張 ===== */
+/* ===== 橫放 / 電腦：左右翻頁，一次一張 ===== */
 .scroller {
   display: flex;
   height: 100%;
@@ -38,15 +37,15 @@ body {
 }
 
 .slide {
-  position: relative;
   flex: 0 0 100vw;
   height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 16px 16px 44px;
+  padding: 16px;
   scroll-snap-align: center;
   scroll-snap-stop: always;
+  transition: opacity 0.7s ease;
 }
 
 .slide img {
@@ -58,70 +57,21 @@ body {
   box-shadow: 0 8px 22px rgba(40, 38, 32, 0.25);
 }
 
-/* 封面：緩緩淡入、微微上浮 */
-.slide.cover img {
+/* 結尾空白頁（橫放 / 電腦用） */
+.end-spacer {
+  flex: 0 0 100vw;
+  height: 100%;
+  scroll-snap-align: center;
+  scroll-snap-stop: always;
+}
+
+/* 開場：封面緩緩淡入、微微上浮 */
+.slide:first-child img {
   animation: coverIn 1.8s cubic-bezier(0.2, 0.7, 0.2, 1) 0.2s both;
 }
 @keyframes coverIn {
   from { opacity: 0; transform: translateY(14px) scale(0.985); }
   to   { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-/* 頁碼 */
-.counter {
-  position: absolute;
-  bottom: 14px;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 3px 12px;
-  border-radius: 999px;
-  background: rgba(232, 230, 225, 0.75);
-  font-family: Georgia, serif;
-  font-size: 13px;
-  letter-spacing: 0.15em;
-  color: #5a5750;
-  z-index: 2;
-}
-
-/* 封面的「往上滑」提示：固定在畫面上，往上滑時淡出 */
-.hint {
-  position: absolute;
-  bottom: 28px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  z-index: 2;
-  animation: hintFade 1.2s ease 2s both;
-}
-.hint-text {
-  font-family: Georgia, "Songti TC", "Noto Serif TC", serif;
-  font-size: 12px;
-  letter-spacing: 0.3em;
-  margin-right: -0.3em;
-  color: #6b675e;
-}
-.hint-arrow {
-  width: 8px;
-  height: 8px;
-  border-top: 1.5px solid #6b675e;
-  border-left: 1.5px solid #6b675e;
-  transform: rotate(45deg);
-  animation: hintBounce 1.8s ease-in-out infinite;
-}
-@keyframes hintBounce {
-  0%, 100% { transform: translateY(2px) rotate(45deg); opacity: 0.4; }
-  50%      { transform: translateY(-4px) rotate(45deg); opacity: 1; }
-}
-@keyframes hintFade {
-  from { opacity: 0; }
-  to   { opacity: 1; }
 }
 
 .nav {
@@ -138,24 +88,82 @@ body {
   font-size: 28px;
   cursor: pointer;
   z-index: 2;
+  transition: opacity 0.5s ease;
 }
 .nav:disabled {
   opacity: 0.25;
   cursor: default;
 }
-.prev {
-  left: 12px;
-}
-.next {
-  right: 12px;
-}
+.prev { left: 12px; }
+.next { right: 12px; }
 @media (hover: hover) {
-  .nav {
-    display: block;
-  }
+  .nav { display: block; }
 }
 
-/* ===== 直立：連續的長卷 ===== */
+/* 提示：預設不顯示（只在直立時使用） */
+.hint {
+  display: none;
+}
+
+/* ===== 結尾：名字 + LinkedIn（置中，淡入） ===== */
+.end {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+  opacity: 0;
+  transform: translateY(10px);
+  pointer-events: none; /* 讓空白處仍可滑動 */
+  transition: opacity 0.9s ease, transform 0.9s ease;
+}
+.paper.ended .end {
+  opacity: 1;
+  transform: translateY(0);
+}
+.paper.ended .end-link {
+  pointer-events: auto;
+}
+.paper.ended .slide,
+.paper.ended .slide:not(:first-child) {
+  opacity: 0;
+}
+.paper.ended .nav {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.end-link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 20px 28px;
+  color: #3a3832;
+  text-decoration: none;
+}
+.end-icon {
+  width: 44px;
+  height: 44px;
+}
+.end-name {
+  font-family: Georgia, "Songti TC", "Noto Serif TC", serif;
+  font-size: 18px;
+  letter-spacing: 0.3em;
+  margin-right: -0.3em;
+  color: #2f2d28;
+  margin-bottom: 6px;
+}
+.end-text {
+  font-family: Georgia, "Songti TC", "Noto Serif TC", serif;
+  font-size: 14px;
+  letter-spacing: 0.35em;
+  margin-right: -0.35em;
+  color: #5a5750;
+}
+
+/* ===== 直立：一條長卷，每張間距相同，封面落在畫面正中央 ===== */
 @media (orientation: portrait) {
   .scroller {
     flex-direction: column;
@@ -163,7 +171,9 @@ body {
     overflow-x: hidden;
     overflow-y: auto;
     scroll-snap-type: none;
-    padding: 0 0 64px;
+    /* 上方留白讓封面置中；下方留白讓最後一頁能被推上來，再滑到底顯示連結
+       圖片高度 = (畫面寬 - 20px) × 1357/1920 */
+    padding: calc(50dvh - (100vw - 20px) * 1357 / 1920 / 2) 0 70dvh;
   }
 
   .slide {
@@ -174,28 +184,76 @@ body {
     scroll-snap-align: none;
   }
 
+  .end-spacer {
+    display: none;
+  }
+
   .slide img {
     width: 100%;
     height: auto;
     max-height: none;
   }
 
-  /* 封面：用 svh（網址列展開時的最小可見高度）撐滿一屏，
-     再多加 8svh，確保第二頁一開始一定在畫面外 */
-  .slide.cover {
-    height: calc(100svh + 8svh);
-    padding-bottom: 8svh;
-    align-items: center;
+  /* 在封面位置時只顯示封面；離開頂部後其他頁淡入，回到頂部又淡出
+     （只是透明，位置與間距完全不變） */
+  .slide:not(:first-child) {
+    opacity: 0;
+    transition: opacity 0.9s ease;
+  }
+  .paper.started .slide:not(:first-child) {
+    opacity: 1;
+  }
+  /* 滑到底：全部淡出（要放在 started 之後，才會蓋過它） */
+  .paper.ended .slide:not(:first-child) {
+    opacity: 0;
   }
 
-  /* 封面和第二頁的視覺間距：把多出來的空白用負 margin 抵掉，
-     讓封面圖片到第二頁的距離接近一般的 12px 間距 */
-  .slide.cover {
-    margin-bottom: calc(-1 * (50svh - 35.5vw) + 12px);
-  }
-
+  /* 提示：固定在畫面底部；在封面位置時出現，離開頂部淡出 */
   .hint {
+    position: absolute;
     bottom: 5svh;
+    left: 50%;
+    transform: translateX(-50%);
+    display: block;
+    pointer-events: none;
+    z-index: 2;
+    opacity: 1;
+    transition: opacity 0.5s ease;
+  }
+  .paper.started .hint {
+    opacity: 0;
+  }
+
+  .hint-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    /* 進站時輕輕出現 */
+    animation: hintIn 0.8s ease 1s both;
+  }
+  .hint-text {
+    font-family: Georgia, "Songti TC", "Noto Serif TC", serif;
+    font-size: 12px;
+    letter-spacing: 0.3em;
+    margin-right: -0.3em;
+    color: #6b675e;
+  }
+  .hint-arrow {
+    width: 8px;
+    height: 8px;
+    border-top: 1.5px solid #6b675e;
+    border-left: 1.5px solid #6b675e;
+    transform: rotate(45deg);
+    animation: hintBounce 1.8s ease-in-out infinite;
+  }
+  @keyframes hintIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  @keyframes hintBounce {
+    0%, 100% { transform: translateY(2px) rotate(45deg); opacity: 0.4; }
+    50%      { transform: translateY(-4px) rotate(45deg); opacity: 1; }
   }
 
   .nav {
